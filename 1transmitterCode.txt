@@ -1,0 +1,57 @@
+#include <Wire.h>
+#include <SPI.h>
+#include "nRF24L01.h"
+#include "RF24.h"
+RF24 radio(9, 8); // CE, CSN
+const byte address[6] = "00001";
+
+int temp_address = 72;
+int LampPin = 2;	// Lamp control is connected to pin 2
+int FanPin = 3;	// Fan control is connected to pin 3
+
+void setup() 
+	{
+	//radio setup
+	radio.begin();
+	radio.openWritingPipe(address);
+	radio.setPALevel(RF24_PA_MAX);
+	radio.stopListening();
+	Serial.begin(9600); // initialize serial monitor
+	Wire.begin();
+	pinMode(LampPin, OUTPUT);	// Set the Lamp control pin as output
+	pinMode(FanPin, OUTPUT);	// Set the Fan control pin as output
+	Serial.println("Start");
+	}
+void loop()
+	{
+	Wire.beginTransmission(temp_address); 
+	Wire.write(0); 
+	Wire.endTransmission(); 
+	Wire.requestFrom(temp_address, 1); 
+	while(Wire.available() == 0);
+	int c = Wire.read(); 
+	radio.write(&c, sizeof(c));
+	Serial.println(c);
+
+	if ( c > 28)
+		{
+		digitalWrite(FanPin, HIGH);   // turn Fan on
+		digitalWrite(LampPin, LOW);   // turn Lamp off
+		}
+	else if ( c < 24)
+		{
+		digitalWrite(FanPin, LOW);   // turn Fan off
+		}
+
+	if (c < 11)
+		{
+		digitalWrite(LampPin, HIGH);   // turn Lamp on
+		digitalWrite(FanPin, LOW);   // turn Fan off
+		}
+	else if ( c > 15)
+		{
+		digitalWrite(LampPin, LOW);   // turn Lamp off
+		}
+
+	delay(2000);
+	}

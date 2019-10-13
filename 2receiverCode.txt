@@ -1,0 +1,39 @@
+#include <LiquidCrystal.h>
+#include <SPI.h> 
+#include "nRF24L01.h" //nRF24L01 library
+#include "RF24.h" //RF24 library
+RF24 Radio(9, 8); // CE, CSN
+const byte address[6] = "00001";
+LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
+
+int incomingByte = 0;
+//int LEDio = 13;
+
+void setup()
+	{
+	//initialize Radio
+	Serial.begin(9600);
+	Radio.begin();
+	Radio.openReadingPipe(0, address);
+	Radio.setPALevel(RF24_PA_MAX);
+	Radio.startListening();
+	lcd.begin(16,2);
+	//pinMode(LEDio, OUTPUT);	// Set the LED control pin as output
+	//digitalWrite(LEDio, LOW);
+	}
+
+void loop()
+	{
+	lcd.setCursor(0, 0);
+	lcd.noCursor();
+	lcd.print("Temp.= ");
+	if (Radio.available())
+		{
+		//receiving data
+		incomingByte = Radio.getDynamicPayloadSize();
+		Radio.read(&incomingByte , sizeof(incomingByte));
+		Serial.println(incomingByte);
+		lcd.print(incomingByte);
+		lcd.println(" C ");
+		}
+	}
